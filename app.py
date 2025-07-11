@@ -184,11 +184,37 @@ overflow: hidden;
 box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
 margin: 1rem 0;
 }
+
+/* Mejores separadores visuales */
+.main-divider {
+border: none;
+height: 3px;
+background: linear-gradient(135deg, #10b981, #059669);
+margin: 3rem 0;
+border-radius: 2px;
+}
+
+/* Contenedor para secciones principales */
+.main-section {
+background: var(--background-card);
+padding: 2rem;
+border-radius: 16px;
+border: 1px solid var(--border-color);
+box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+margin: 2rem 0;
+}
+
+/* Espaciado extra para separar secciones principales */
+.major-section-break {
+margin: 4rem 0;
+height: 1px;
+background: linear-gradient(90deg, transparent, var(--border-color), transparent);
+}
 </style>
 """, unsafe_allow_html=True)
 
 # Título y descripción
-st.markdown('<p class="main-header">Calculadora Bayesiana para Tests A/B</p>', unsafe_allow_html=True)
+st.markdown('<h2 class="main-header">Calculadora Bayesiana para Tests A/B</h2>', unsafe_allow_html=True)
 st.markdown("""
 <div class="info-box">
 Esta herramienta te permite analizar los resultados de tus pruebas A/B utilizando estadística bayesiana.
@@ -428,12 +454,28 @@ with tab3:
        3. Guárdalo como `mi_test_ab.csv`
        """)
 
+# Separador visual grande entre secciones principales
+st.markdown('<div class="section-spacer"></div>', unsafe_allow_html=True)
+st.markdown('<div class="section-spacer"></div>', unsafe_allow_html=True)
+
 # Mostrar resultados si hay datos procesados
 if st.session_state.datos_procesados:
-    st.markdown('<div class="section-spacer"></div>', unsafe_allow_html=True)
-    st.markdown('<p class="main-header">Resultados del análisis</p>', unsafe_allow_html=True)
+# Línea divisoria visual
+ st.markdown("---")
+st.markdown('<div class="section-spacer"></div>', unsafe_allow_html=True)
 
-    # Pestañas para diferentes visualizaciones
+st.markdown('<h2 class="main-header"> Resultados del Análisis Bayesiano</h2>', unsafe_allow_html=True)
+
+st.markdown("""
+<div class="info-box">
+A continuación se muestran los resultados de tu análisis A/B utilizando estadística bayesiana.
+Explora las diferentes pestañas para ver el resumen, historial detallado y visualizaciones.
+</div>
+""", unsafe_allow_html=True)
+
+st.markdown('<div class="subsection-spacer"></div>', unsafe_allow_html=True)
+
+# Pestañas para diferentes visualizaciones
 res_tab1, res_tab2, res_tab3 = st.tabs(["📋 Resumen", "📝 Historial detallado", "📈 Gráficos"])
 
 with res_tab1:

@@ -18,25 +18,171 @@ initial_sidebar_state="expanded"
 # Estilos CSS personalizados
 st.markdown("""
 <style>
+/* Paleta de colores moderna */
+:root {
+--primary-color: #6366f1;
+--secondary-color: #8b5cf6;
+--success-color: #10b981;
+--warning-color: #f59e0b;
+--error-color: #ef4444;
+--info-color: #3b82f6;
+--background-light: #f8fafc;
+--background-card: #ffffff;
+--text-primary: #1e293b;
+--text-secondary: #64748b;
+--border-color: #e2e8f0;
+}
+
+/* Headers con nueva paleta */
 .main-header {
-    font-size: 2.5rem;
-    color: #1E88E5;
+font-size: 2.5rem;
+color: var(--primary-color);
+font-weight: 700;
+margin-bottom: 2rem;
+text-align: center;
 }
+
 .sub-header {
-    font-size: 1.5rem;
-    color: #424242;
+font-size: 1.5rem;
+color: var(--text-primary);
+font-weight: 600;
+margin: 1.5rem 0;
 }
+
+/* Cajas de información con mejor espaciado */
 .success-box {
-    background-color: #E8F5E9;
-    padding: 1rem;
-    border-radius: 0.5rem;
-    border-left: 0.5rem solid #4CAF50;
+background: linear-gradient(135deg, #10b981, #059669);
+color: white;
+padding: 1.5rem;
+border-radius: 12px;
+margin: 1.5rem 0;
+box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.1);
 }
+
 .info-box {
-    background-color: #E3F2FD;
-    padding: 1rem;
-    border-radius: 0.5rem;
-    border-left: 0.5rem solid #2196F3;
+background: linear-gradient(135deg, var(--info-color), var(--primary-color));
+color: white;
+padding: 1.5rem;
+border-radius: 12px;
+margin: 1.5rem 0;
+box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.1);
+}
+
+.warning-box {
+background: linear-gradient(135deg, var(--warning-color), #d97706);
+color: white;
+padding: 1.5rem;
+border-radius: 12px;
+margin: 1.5rem 0;
+box-shadow: 0 4px 6px -1px rgba(245, 158, 11, 0.1);
+}
+
+.error-box {
+background: linear-gradient(135deg, var(--error-color), #dc2626);
+color: white;
+padding: 1.5rem;
+border-radius: 12px;
+margin: 1.5rem 0;
+box-shadow: 0 4px 6px -1px rgba(239, 68, 68, 0.1);
+}
+
+/* Espaciado mejorado entre secciones */
+.section-spacer {
+margin: 3rem 0;
+}
+
+.subsection-spacer {
+margin: 2rem 0;
+}
+
+.small-spacer {
+margin: 1rem 0;
+}
+
+/* Contenedores de métricas */
+.metric-container {
+background: var(--background-card);
+padding: 1.5rem;
+border-radius: 12px;
+border: 1px solid var(--border-color);
+box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+margin: 1rem 0;
+}
+
+/* Mejorar el estilo de las tabs */
+.stTabs [data-baseweb="tab-list"] {
+gap: 8px;
+}
+
+.stTabs [data-baseweb="tab"] {
+height: 50px;
+padding-left: 20px;
+padding-right: 20px;
+background-color: var(--background-light);
+border-radius: 8px;
+color: var(--text-secondary);
+font-weight: 500;
+}
+
+.stTabs [aria-selected="true"] {
+background-color: #10b981 !important;
+color: white !important;
+}
+
+/* Botones mejorados */
+.stButton > button {
+background: linear-gradient(135deg, #64748b, #475569);
+color: white;
+border: none;
+border-radius: 8px;
+padding: 0.5rem 1.5rem;
+font-weight: 600;
+transition: all 0.3s ease;
+}
+
+.stButton > button:hover {
+background: linear-gradient(135deg, #475569, #334155);
+transform: translateY(-2px);
+box-shadow: 0 4px 12px rgba(100, 116, 139, 0.3);
+}
+
+/* Botón primario (más destacado pero suave) */
+.stButton > button[kind="primary"] {
+background: linear-gradient(135deg, #10b981, #059669);
+}
+
+.stButton > button[kind="primary"]:hover {
+background: linear-gradient(135deg, #059669, #047857);
+box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+/* Sidebar mejorado */
+.css-1d391kg {
+background-color: var(--background-light);
+}
+
+/* Espaciado general mejorado */
+.main .block-container {
+padding-top: 2rem;
+padding-bottom: 2rem;
+}
+
+/* Cards para resultados */
+.result-card {
+background: var(--background-card);
+padding: 2rem;
+border-radius: 16px;
+border: 1px solid var(--border-color);
+box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+margin: 1.5rem 0;
+}
+
+/* Mejorar dataframes */
+.stDataFrame {
+border-radius: 8px;
+overflow: hidden;
+box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+margin: 1rem 0;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -49,6 +195,9 @@ Esta herramienta te permite analizar los resultados de tus pruebas A/B utilizand
 Sube un archivo CSV con tus datos o ingresa la información manualmente.
 </div>
 """, unsafe_allow_html=True)
+
+st.markdown('<div class="section-spacer"></div>', unsafe_allow_html=True)
+
 
 # Inicializar la calculadora en el estado de la sesión
 if 'calculadora' not in st.session_state:
@@ -97,6 +246,8 @@ with st.sidebar:
         st.success("Calculadora reiniciada correctamente")
 
 # Pestañas para diferentes métodos de entrada
+st.markdown('<div class="subsection-spacer"></div>', unsafe_allow_html=True)
+
 tab1, tab2, tab3 = st.tabs(["📊 Cargar CSV", "✏️ Entrada manual", "📋 Formato CSV"])
 
 # Pestaña de carga de CSV (simplificada)
@@ -170,6 +321,7 @@ with tab1:
                        
                        st.session_state.datos_procesados = True
                        st.markdown('<div class="success-box">¡Datos procesados correctamente! Ve a la sección de resultados para ver el análisis.</div>', unsafe_allow_html=True)
+
        
        except Exception as e:
            st.error(f"❌ Error al procesar el archivo: {e}")
@@ -206,6 +358,7 @@ with tab2:
               calculadora.actualizar_con_datos(clicks_a, visitas_a, clicks_b, visitas_b, dia=dia)
               st.session_state.datos_procesados = True
               st.markdown(f'<div class="success-box">Datos del {dia} añadidos correctamente</div>', unsafe_allow_html=True)
+
 
 # Nueva pestaña para el formato CSV
 with tab3:
@@ -277,6 +430,7 @@ with tab3:
 
 # Mostrar resultados si hay datos procesados
 if st.session_state.datos_procesados:
+    st.markdown('<div class="section-spacer"></div>', unsafe_allow_html=True)
     st.markdown('<p class="main-header">Resultados del análisis</p>', unsafe_allow_html=True)
 
     # Pestañas para diferentes visualizaciones
@@ -437,6 +591,7 @@ with res_tab3:
        st.pyplot(fig3)
 
 # Pie de página
+st.markdown('<div class="section-spacer"></div>', unsafe_allow_html=True)
 st.markdown("---")
 st.markdown("""
 <div style="text-align: center; background-color: #f5f5f5; padding: 10px; border-radius: 5px; margin-top: 20px;">

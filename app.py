@@ -97,7 +97,7 @@ with st.sidebar:
      st.success("Calculadora reiniciada correctamente")
 
 # Pestañas para diferentes métodos de entrada
-tab1, tab2 = st.tabs(["Cargar CSV", "Entrada manual"])
+tab1, tab2 = st.tabs(["📊 Cargar CSV", "✏️ Entrada manual"])
 
 # Pestaña de carga de CSV
 with tab1:
@@ -135,24 +135,27 @@ with tab1:
          if st.button("Procesar datos del CSV"):
             calculadora = st.session_state.calculadora
 
-            # Barra de progreso
-            progress_bar = st.progress(0)
-            total_rows = len(df)
-
-            # Procesar cada fila del CSV
-            for i, row in df.iterrows():
-                dia = f"Día {int(row['Día'])}"
-                clicks_a = int(row['Conversiones A'])
-                visitas_a = int(row['Visitas A'])
-                clicks_b = int(row['Conversiones B'])
-                visitas_b = int(row['Visitas B'])
-                calculadora.actualizar_con_datos(clicks_a, visitas_a, clicks_b, visitas_b, dia=dia)
+            with st.spinner("Por favor ten paciencia mientras se cargan los datos..."):
+                # Barra de progreso mejorada
+                progress_text = "Procesando datos del test A/B..."
+                progress_bar = st.progress(0, text=progress_text)
+                total_rows = len(df)
                 
-                # Actualizar barra de progreso
-                progress_bar.progress((i + 1) / total_rows)
-
-            st.session_state.datos_procesados = True
-            st.markdown('<div class="success-box">¡Datos procesados correctamente!</div>', unsafe_allow_html=True)
+                # Procesar cada fila del CSV
+                for i, row in df.iterrows():
+                    dia = f"Día {int(row['Día'])}"
+                    clicks_a = int(row['Conversiones A'])
+                    visitas_a = int(row['Visitas A'])
+                    clicks_b = int(row['Conversiones B'])
+                    visitas_b = int(row['Visitas B'])
+                    calculadora.actualizar_con_datos(clicks_a, visitas_a, clicks_b, visitas_b, dia=dia)
+                    
+                    # Actualizar barra de progreso
+                    current_progress = (i + 1) / total_rows
+                    progress_bar.progress(current_progress, text=f"Procesando día {i+1} de {total_rows}... ({int(current_progress*100)}%)")
+                
+                st.session_state.datos_procesados = True
+                st.markdown('<div class="success-box">¡Datos procesados correctamente!</div>', unsafe_allow_html=True)
      
      except Exception as e:
          st.error(f"Error al procesar el archivo: {e}")
@@ -183,17 +186,18 @@ with tab2:
      submitted = st.form_submit_button("Añadir datos")
      
      if submitted:
-         calculadora = st.session_state.calculadora
-         calculadora.actualizar_con_datos(clicks_a, visitas_a, clicks_b, visitas_b, dia=dia)
-         st.session_state.datos_procesados = True
-         st.markdown(f'<div class="success-box">Datos del {dia} añadidos correctamente</div>', unsafe_allow_html=True)
+        with st.spinner("Por favor ten paciencia mientras se procesan los datos..."):
+            calculadora = st.session_state.calculadora
+            calculadora.actualizar_con_datos(clicks_a, visitas_a, clicks_b, visitas_b, dia=dia)
+            st.session_state.datos_procesados = True
+            st.markdown(f'<div class="success-box">Datos del {dia} añadidos correctamente</div>', unsafe_allow_html=True)
 
 # Mostrar resultados si hay datos procesados
 if st.session_state.datos_procesados:
  st.markdown('<p class="main-header">Resultados del análisis</p>', unsafe_allow_html=True)
  
  # Pestañas para diferentes visualizaciones
- res_tab1, res_tab2, res_tab3 = st.tabs(["Resumen", "Historial detallado", "Gráficos"])
+ res_tab1, res_tab2, res_tab3 = st.tabs(["📋 Resumen", "📝 Historial detallado", "📈 Gráficos"])
  
  with res_tab1:
      # Mostrar resultado final

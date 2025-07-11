@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+import numpy as np  # Añade esta línea
 import io
 from contextlib import redirect_stdout
 from calculadora_bayesiana import CalculadoraClicksBayesiana
@@ -132,26 +133,26 @@ with tab1:
          st.dataframe(df)
          
          if st.button("Procesar datos del CSV"):
-             calculadora = st.session_state.calculadora
-             
-             # Barra de progreso
-             progress_bar = st.progress(0)
-             total_rows = len(df)
-             
-             # Procesar cada fila del CSV
-             for i, row in df.iterrows():
-                 dia = f"Día {int(row['Día'])}"
-                 clicks_a = int(row['Conversiones A'])
-                 visitas_a = int(row['Visitas A'])
-                 clicks_b = int(row['Conversiones B'])
-                 visitas_b = int(row['Visitas B'])
-                 calculadora.actualizar_con_datos(clicks_a, visitas_a, clicks_b, visitas_b, dia=dia)
-                 
-                 # Actualizar barra de progreso
-                 progress_bar.progress((i + 1) / total_rows)
-             
-             st.session_state.datos_procesados = True
-             st.markdown('<div class="success-box">¡Datos procesados correctamente!</div>', unsafe_allow_html=True)
+            calculadora = st.session_state.calculadora
+
+            # Barra de progreso
+            progress_bar = st.progress(0)
+            total_rows = len(df)
+
+            # Procesar cada fila del CSV
+            for i, row in df.iterrows():
+                dia = f"Día {int(row['Día'])}"
+                clicks_a = int(row['Conversiones A'])
+                visitas_a = int(row['Visitas A'])
+                clicks_b = int(row['Conversiones B'])
+                visitas_b = int(row['Visitas B'])
+                calculadora.actualizar_con_datos(clicks_a, visitas_a, clicks_b, visitas_b, dia=dia)
+                
+                # Actualizar barra de progreso
+                progress_bar.progress((i + 1) / total_rows)
+
+            st.session_state.datos_procesados = True
+            st.markdown('<div class="success-box">¡Datos procesados correctamente!</div>', unsafe_allow_html=True)
      
      except Exception as e:
          st.error(f"Error al procesar el archivo: {e}")
@@ -254,66 +255,99 @@ if st.session_state.datos_procesados:
      st.code(buffer.getvalue(), language="text")
  
  with res_tab3:
-     if len(st.session_state.calculadora.historial) > 0:
-         st.subheader("Gráficos")
-         
-         # Mostrar gráficos del último estado
-         ultimo_paso = st.session_state.calculadora.historial[-1]
-         
-         if "trace" in ultimo_paso:
-             # Crear gráfico de distribuciones posteriores
-             fig1, ax1 = plt.subplots(figsize=(10, 5))
-             tasa_a_samples = ultimo_paso['trace'].posterior['tasa_clicks_a'].values.flatten()
-             tasa_b_samples = ultimo_paso['trace'].posterior['tasa_clicks_b'].values.flatten()
-             
-             sns.kdeplot(tasa_a_samples, label="Grupo A", fill=True, ax=ax1)
-             sns.kdeplot(tasa_b_samples, label="Grupo B", fill=True, ax=ax1)
-             ax1.set_title(f"{ultimo_paso['dia']} - Distribuciones posteriores")
-             ax1.set_xlabel("Tasa de clicks por visita")
-             ax1.legend()
-             
-             st.pyplot(fig1)
-             
-             # Crear gráfico de diferencia
-             fig2, ax2 = plt.subplots(figsize=(10, 4))
-             diff = ultimo_paso['trace'].posterior['diferencia'].values.flatten()
-             
-             sns.kdeplot(diff, label="Diferencia (B - A)", color="purple", fill=True, ax=ax2)
-             ax2.axvline(0, color="black", linestyle="--")
-             ax2.set_title(f"{ultimo_paso['dia']} - Diferencia de tasa de clicks")
-             ax2.set_xlabel("Diferencia en clicks por visita")
-             ax2.legend()
-             
-             st.pyplot(fig2)
-             
-             # Mostrar gráfico de evolución si hay más de un día de datos
-             if len(st.session_state.calculadora.historial) > 2:  # Más de 2 porque el primero es "A priori"
-                 st.subheader("Evolución de tasas de conversión")
-                 
-                 # Preparar datos para el gráfico de evolución
-                 dias = []
-                 tasas_a = []
-                 tasas_b = []
-                 
-                 for paso in st.session_state.calculadora.historial[1:]:  # Excluir "A priori"
-                     if 'dia' in paso:
-                         dias.append(paso['dia'])
-                         tasas_a.append(paso['alpha_a'] / paso['beta_a'])
-                         tasas_b.append(paso['alpha_b'] / paso['beta_b'])
-                 
-                 # Crear gráfico de evolución
-                 fig3, ax3 = plt.subplots(figsize=(10, 5))
-                 ax3.plot(dias, tasas_a, 'o-', label="Grupo A", color="blue")
-                 ax3.plot(dias, tasas_b, 'o-', label="Grupo B", color="orange")
-                 ax3.set_title("Evolución de tasas de conversión")
-                 ax3.set_xlabel("Día")
-                 ax3.set_ylabel("Tasa de conversión")
-                 ax3.legend()
-                 ax3.grid(True)
-                 plt.xticks(rotation=45)
-                 plt.tight_layout()
-                 
-                 st.pyplot(fig3)
+  if len(st.session_state.calculadora.historial) > 0:
+    st.subheader("Gráficos")
+    
+    # Crear selector de día
+    dias_disponibles = [paso['dia'] for paso in st.session_state.calculadora.historial if 'dia' in paso]
+    if len(dias_disponibles) > 1:  # Si hay más de un día (excluyendo "A priori")
+        dia_seleccionado = st.selectbox("Selecciona un día para ver sus gráficos:", 
+                                       dias_disponibles[1:],  # Excluir "A priori"
+                                       index=len(dias_disponibles)-2)  # Seleccionar el último día por defecto
+        
+        # Encontrar el paso correspondiente al día seleccionado
+        paso_seleccionado = None
+        for paso in st.session_state.calculadora.historial:
+            if 'dia' in paso and paso['dia'] == dia_seleccionado:
+                paso_seleccionado = paso
+                break
+    else:
+        paso_seleccionado = st.session_state.calculadora.historial[-1]
+    
+    # Mostrar gráficos del día seleccionado
+    if paso_seleccionado and "trace" in paso_seleccionado:
+        # Crear gráfico de distribuciones posteriores
+        fig1, ax1 = plt.subplots(figsize=(10, 5))
+        tasa_a_samples = paso_seleccionado['trace'].posterior['tasa_clicks_a'].values.flatten()
+        tasa_b_samples = paso_seleccionado['trace'].posterior['tasa_clicks_b'].values.flatten()
+        
+        sns.kdeplot(tasa_a_samples, label="Grupo A", fill=True, ax=ax1)
+        sns.kdeplot(tasa_b_samples, label="Grupo B", fill=True, ax=ax1)
+        ax1.set_title(f"{paso_seleccionado['dia']} - Distribuciones posteriores")
+        ax1.set_xlabel("Tasa de clicks por visita")
+        ax1.legend()
+        
+        st.pyplot(fig1)
+        
+        # Crear gráfico de diferencia
+        fig2, ax2 = plt.subplots(figsize=(10, 4))
+        diff = paso_seleccionado['trace'].posterior['diferencia'].values.flatten()
+        
+        sns.kdeplot(diff, label="Diferencia (B - A)", color="purple", fill=True, ax=ax2)
+        ax2.axvline(0, color="black", linestyle="--")
+        ax2.set_title(f"{paso_seleccionado['dia']} - Diferencia de tasa de clicks")
+        ax2.set_xlabel("Diferencia en clicks por visita")
+        ax2.legend()
+        
+        st.pyplot(fig2)
+        
+        # Mostrar estadísticas del día seleccionado
+        col1, col2 = st.columns(2)
+        with col1:
+            st.subheader(f"Estadísticas del {paso_seleccionado['dia']}")
+            mean_a = paso_seleccionado['alpha_a'] / paso_seleccionado['beta_a']
+            mean_b = paso_seleccionado['alpha_b'] / paso_seleccionado['beta_b']
+            st.metric("Tasa de conversión A", f"{mean_a:.4f}")
+            st.metric("Tasa de conversión B", f"{mean_b:.4f}")
+        
+        with col2:
+            if "uplift" in paso_seleccionado:
+                uplift = paso_seleccionado["uplift"]
+                st.subheader("Uplift (B vs A)")
+                st.metric("Media", f"{uplift['media']:.2%}")
+                st.metric("IC 95%", f"[{uplift['ic_95'][0]:.2%}, {uplift['ic_95'][1]:.2%}]")
+            
+            prob_b_mejor = np.mean(diff > 0)
+            st.metric("Probabilidad de que B > A", f"{prob_b_mejor:.2%}")
+    
+    # Mostrar gráfico de evolución si hay más de un día de datos
+    if len(st.session_state.calculadora.historial) > 2:  # Más de 2 porque el primero es "A priori"
+        st.subheader("Evolución de tasas de conversión")
+        
+        # Preparar datos para el gráfico de evolución
+        dias = []
+        tasas_a = []
+        tasas_b = []
+        
+        for paso in st.session_state.calculadora.historial[1:]:  # Excluir "A priori"
+            if 'dia' in paso:
+                dias.append(paso['dia'])
+                tasas_a.append(paso['alpha_a'] / paso['beta_a'])
+                tasas_b.append(paso['alpha_b'] / paso['beta_b'])
+        
+        # Crear gráfico de evolución
+        fig3, ax3 = plt.subplots(figsize=(10, 5))
+        ax3.plot(dias, tasas_a, 'o-', label="Grupo A", color="blue")
+        ax3.plot(dias, tasas_b, 'o-', label="Grupo B", color="orange")
+        ax3.set_title("Evolución de tasas de conversión")
+        ax3.set_xlabel("Día")
+        ax3.set_ylabel("Tasa de conversión")
+        ax3.legend()
+        ax3.grid(True)
+        plt.xticks(rotation=45)
+        plt.tight_layout()
+        
+        st.pyplot(fig3)
 
 # Pie de página
 st.markdown("---")

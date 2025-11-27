@@ -2,10 +2,11 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-import numpy as np  # Añade esta línea
+import numpy as np
 import io
 from contextlib import redirect_stdout
 from calculadora_bayesiana import CalculadoraClicksBayesiana
+from calculadora_bayesiana_conversiones import CalculadoraConversionesBayesiana
 
 # Configuración de la página
 st.set_page_config(
@@ -227,7 +228,11 @@ st.markdown('<div class="section-spacer"></div>', unsafe_allow_html=True)
 
 # Inicializar la calculadora en el estado de la sesión
 if 'calculadora' not in st.session_state:
-    st.session_state.calculadora = CalculadoraClicksBayesiana()
+    modelo_inicial = st.session_state.get('tipo_modelo', 'Clicks (Gamma–Poisson)')
+    if modelo_inicial == 'Conversiones 0/1 (Beta–Binomial)':
+        st.session_state.calculadora = CalculadoraConversionesBayesiana()
+    else:
+        st.session_state.calculadora = CalculadoraClicksBayesiana()
     st.session_state.datos_procesados = False
 
 # Sidebar con información y opciones
@@ -243,6 +248,14 @@ with st.sidebar:
     - Actualiza continuamente las estimaciones
     - Permite tomar decisiones con menos datos
     """)
+
+    # Selector de tipo de modelo
+    tipo_modelo = st.radio(
+        "Tipo de experimento", 
+        ["Clicks (Gamma–Poisson)", "Conversiones 0/1 (Beta–Binomial)"], 
+        key="tipo_modelo",
+        help="Elige si tus datos representan clics/visitas (CTR) o conversiones/visitas (tasa de conversión)."
+    )
 
     st.markdown('<p class="sub-header">Configuración</p>', unsafe_allow_html=True)
 
@@ -267,7 +280,11 @@ with st.sidebar:
 
     # Botón para reiniciar
     if st.button("Reiniciar calculadora"):
-        st.session_state.calculadora = CalculadoraClicksBayesiana()
+        modelo = st.session_state.get('tipo_modelo', 'Clicks (Gamma–Poisson)')
+        if modelo == "Conversiones 0/1 (Beta–Binomial)":
+            st.session_state.calculadora = CalculadoraConversionesBayesiana()
+        else:
+            st.session_state.calculadora = CalculadoraClicksBayesiana()
         st.session_state.datos_procesados = False
         st.success("Calculadora reiniciada correctamente")
 
@@ -499,6 +516,11 @@ with res_tab1:
         
         st.write(f"**Recomendación:** {resultado['decision']}")
         st.write(f"**Razón:** {resultado['razon']}")
+
+        # Aviso si hay pocos días de datos (menos de 6)
+        dias_con_datos = [paso for paso in st.session_state.calculadora.historial if paso.get('dia') and paso['dia'] != 'A priori']
+        if len(dias_con_datos) < 6:
+            st.warning("⚠️ Has cargado menos de 6 días de datos. La recomendación puede cambiar al añadir más información.")
     
     with col2:
         if "probabilidad" in resultado:
@@ -518,13 +540,22 @@ with res_tab1:
         
         with col1:
             st.write("**Grupo A**")
-            mean_a = ultimo['alpha_a'] / ultimo['beta_a']
+            if tipo_modelo == "Conversiones 0/1 (Beta–Binomial)":
+                mean_a = ultimo['alpha_a'] / (ultimo['alpha_a'] + ultimo['beta_a'])
+            else:
+                mean_a = ultimo['alpha_a'] / ultimo['beta_a']
             st.metric("Tasa de conversión esperada", f"{mean_a:.4f}")
             st.write(f"Parámetros: alpha={ultimo['alpha_a']:.1f}, beta={ultimo['beta_a']:.1f}")
         
         with col2:
             st.write("**Grupo B**")
-            mean_b = ultimo['alpha_b'] / ultimo['beta_b']
+            if tipo_modelo == "Conversiones 0/1 (Beta–Binomial)":
+                mean_b = ultimo['alpha_b'] / (ultimo['alpha_b'] + ultimo['beta_b'])
+            else:
+                mean_b = ultimo['alpha_b'] / ultimo['beta_b']
+            st.metric("Tasa de conversión esperada", f"{mean_b:.4f}")
+            st.write(f"Parámetros: alpha={ultimo['alpha_b']:.1f}, beta={ultimo['beta_b']:.1f}")
+
             st.metric("Tasa de conversión esperada", f"{mean_b:.4f}")
             st.write(f"Parámetros: alpha={ultimo['alpha_b']:.1f}, beta={ultimo['beta_b']:.1f}")
 
@@ -615,8 +646,12 @@ with res_tab3:
        for paso in st.session_state.calculadora.historial[1:]:  # Excluir "A priori"
            if 'dia' in paso:
                dias.append(paso['dia'])
-               tasas_a.append(paso['alpha_a'] / paso['beta_a'])
-               tasas_b.append(paso['alpha_b'] / paso['beta_b'])
+               if tipo_modelo == "Conversiones 0/1 (Beta–Binomial)":
+                   tasas_a.append(paso['alpha_a'] / (paso['alpha_a'] + paso['beta_a']))
+                   tasas_b.append(paso['alpha_b'] / (paso['alpha_b'] + paso['beta_b']))
+               else:
+                   tasas_a.append(paso['alpha_a'] / paso['beta_a'])
+                   tasas_b.append(paso['alpha_b'] / paso['beta_b'])
        
        # Crear gráfico de evolución
        fig3, ax3 = plt.subplots(figsize=(10, 5))
@@ -628,7 +663,7 @@ with res_tab3:
        ax3.legend()
        ax3.grid(True)
        plt.xticks(rotation=45)
-       plt.tight_layout()
+       plt.tight_layout
        
        st.pyplot(fig3)
 

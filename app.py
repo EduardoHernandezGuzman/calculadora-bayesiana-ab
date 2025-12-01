@@ -478,194 +478,253 @@ st.markdown('<div class="section-spacer"></div>', unsafe_allow_html=True)
 # Mostrar resultados si hay datos procesados
 if st.session_state.datos_procesados:
 # Línea divisoria visual
- st.markdown("---")
-st.markdown('<div class="section-spacer"></div>', unsafe_allow_html=True)
+    st.markdown("---")
+    st.markdown('<div class="section-spacer"></div>', unsafe_allow_html=True)
 
-st.markdown('<h2 class="main-header"> Resultados del Análisis Bayesiano</h2>', unsafe_allow_html=True)
+    st.markdown('<h2 class="main-header"> Resultados del Análisis Bayesiano</h2>', unsafe_allow_html=True)
 
-st.markdown("""
-<div class="info-box">
-A continuación se muestran los resultados de tu análisis A/B utilizando estadística bayesiana.
-Explora las diferentes pestañas para ver el resumen, historial detallado y visualizaciones.
-</div>
-""", unsafe_allow_html=True)
+    st.markdown("""
+    <div class="info-box">
+    A continuación se muestran los resultados de tu análisis A/B utilizando estadística bayesiana.
+    Explora las diferentes pestañas para ver el resumen, historial detallado y visualizaciones.
+    </div>
+    """, unsafe_allow_html=True)
 
-st.markdown('<div class="subsection-spacer"></div>', unsafe_allow_html=True)
+    st.markdown('<div class="subsection-spacer"></div>', unsafe_allow_html=True)
 
-# Pestañas para diferentes visualizaciones
-res_tab1, res_tab2, res_tab3 = st.tabs(["📋 Resumen", "📝 Historial detallado", "📈 Gráficos"])
+    # Pestañas para diferentes visualizaciones
+    res_tab1, res_tab2, res_tab3 = st.tabs(["📋 Resumen", "📝 Historial detallado", "📈 Gráficos"])
 
-with res_tab1:
-    # Mostrar resultado final
-    resultado = st.session_state.calculadora.detectar_ganador(
-        umbral_probabilidad=umbral_prob,
-        umbral_mejora_minima=umbral_mejora
-    )
-    
-    # Mostrar el resultado con formato
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        st.subheader("Decisión final")
-        if resultado["ganador"] == "A":
-            st.success("🏆 El ganador es: Grupo A")
-        elif resultado["ganador"] == "B":
-            st.success("🏆 El ganador es: Grupo B")
-        else:
-            st.info("⚖️ No hay ganador claro todavía")
+    with res_tab1:
+        # Mostrar resultado final
+        resultado = st.session_state.calculadora.detectar_ganador(
+            umbral_probabilidad=umbral_prob,
+            umbral_mejora_minima=umbral_mejora
+        )
         
-        st.write(f"**Recomendación:** {resultado['decision']}")
-        st.write(f"**Razón:** {resultado['razon']}")
-
-        # Aviso si hay pocos días de datos (menos de 6)
-        dias_con_datos = [paso for paso in st.session_state.calculadora.historial if paso.get('dia') and paso['dia'] != 'A priori']
-        if len(dias_con_datos) < 6:
-            st.warning("⚠️ Has cargado menos de 6 días de datos. La recomendación puede cambiar al añadir más información.")
-    
-    with col2:
-        if "probabilidad" in resultado:
-            st.metric("Probabilidad", f"{resultado['probabilidad']:.2%}")
-        elif "probabilidad_b_mejor" in resultado:
-            st.metric("Probabilidad de que B sea mejor", f"{resultado['probabilidad_b_mejor']:.2%}")
-        
-        if "mejora_relativa" in resultado:
-            st.metric("Mejora relativa", f"{resultado['mejora_relativa']:.2%}")
-    
-    # Mostrar último estado
-    if len(st.session_state.calculadora.historial) > 0:
-        ultimo = st.session_state.calculadora.historial[-1]
-        
-        st.subheader("Estado actual")
+        # Mostrar el resultado con formato
         col1, col2 = st.columns(2)
         
         with col1:
-            st.write("**Grupo A**")
-            if tipo_modelo == "Conversiones 0/1 (Beta–Binomial)":
-                mean_a = ultimo['alpha_a'] / (ultimo['alpha_a'] + ultimo['beta_a'])
+            st.subheader("Decisión final")
+            if resultado["ganador"] == "A":
+                st.success("🏆 El ganador es: Grupo A")
+            elif resultado["ganador"] == "B":
+                st.success("🏆 El ganador es: Grupo B")
             else:
-                mean_a = ultimo['alpha_a'] / ultimo['beta_a']
-            st.metric("Tasa de conversión esperada", f"{mean_a:.4f}")
-            st.write(f"Parámetros: alpha={ultimo['alpha_a']:.1f}, beta={ultimo['beta_a']:.1f}")
+                st.info("⚖️ No hay ganador claro todavía")
+            
+            st.write(f"**Recomendación:** {resultado['decision']}")
+            st.write(f"**Razón:** {resultado['razon']}")
+
+            # Aviso si hay pocos días de datos (menos de 6)
+            dias_con_datos = [paso for paso in st.session_state.calculadora.historial if paso.get('dia') and paso['dia'] != 'A priori']
+            if len(dias_con_datos) < 6:
+                st.warning("⚠️ Has cargado menos de 6 días de datos. La recomendación puede cambiar al añadir más información.")
         
         with col2:
-            st.write("**Grupo B**")
-            if tipo_modelo == "Conversiones 0/1 (Beta–Binomial)":
-                mean_b = ultimo['alpha_b'] / (ultimo['alpha_b'] + ultimo['beta_b'])
-            else:
+            if "probabilidad" in resultado:
+                st.metric("Probabilidad", f"{resultado['probabilidad']:.2%}")
+            elif "probabilidad_b_mejor" in resultado:
+                st.metric("Probabilidad de que B sea mejor", f"{resultado['probabilidad_b_mejor']:.2%}")
+            
+            if "mejora_relativa" in resultado:
+                st.metric("Mejora relativa", f"{resultado['mejora_relativa']:.2%}")
+        
+        # Mostrar último estado
+        if len(st.session_state.calculadora.historial) > 0:
+            ultimo = st.session_state.calculadora.historial[-1]
+            
+            st.subheader("Estado actual")
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                st.write("**Grupo A**")
+                mean_a = ultimo['alpha_a'] / ultimo['beta_a']
+                st.metric("Tasa de conversión esperada", f"{mean_a:.4f}")
+                st.write(f"Parámetros: alpha={ultimo['alpha_a']:.1f}, beta={ultimo['beta_a']:.1f}")
+            
+            with col2:
+                st.write("**Grupo B**")
                 mean_b = ultimo['alpha_b'] / ultimo['beta_b']
-            st.metric("Tasa de conversión esperada", f"{mean_b:.4f}")
-            st.write(f"Parámetros: alpha={ultimo['alpha_b']:.1f}, beta={ultimo['beta_b']:.1f}")
+                st.metric("Tasa de conversión esperada", f"{mean_b:.4f}")
+                st.write(f"Parámetros: alpha={ultimo['alpha_b']:.1f}, beta={ultimo['beta_b']:.1f}")
 
-            st.metric("Tasa de conversión esperada", f"{mean_b:.4f}")
-            st.write(f"Parámetros: alpha={ultimo['alpha_b']:.1f}, beta={ultimo['beta_b']:.1f}")
 
-with res_tab2:
-    # Capturar la salida de la función mostrar_historial_completo
-    buffer = io.StringIO()
-    with redirect_stdout(buffer):
-        st.session_state.calculadora.mostrar_historial_completo()
-    
-    # Mostrar la salida en Streamlit
-    st.code(buffer.getvalue(), language="text")
+    with res_tab2:
+        # Capturar la salida de la función mostrar_historial_completo
+        buffer = io.StringIO()
+        with redirect_stdout(buffer):
+            st.session_state.calculadora.mostrar_historial_completo()
+        
+        # Mostrar la salida en Streamlit
+        st.code(buffer.getvalue(), language="text")
 
-with res_tab3:
- if len(st.session_state.calculadora.historial) > 0:
-   st.subheader("Gráficos")
-   
-   # Crear selector de día
-   dias_disponibles = [paso['dia'] for paso in st.session_state.calculadora.historial if 'dia' in paso]
-   if len(dias_disponibles) > 1:  # Si hay más de un día (excluyendo "A priori")
-       dia_seleccionado = st.selectbox("Selecciona un día para ver sus gráficos:", 
-                                      dias_disponibles[1:],  # Excluir "A priori"
-                                      index=len(dias_disponibles)-2)  # Seleccionar el último día por defecto
-       
-       # Encontrar el paso correspondiente al día seleccionado
-       paso_seleccionado = None
-       for paso in st.session_state.calculadora.historial:
-           if 'dia' in paso and paso['dia'] == dia_seleccionado:
-               paso_seleccionado = paso
-               break
-   else:
-       paso_seleccionado = st.session_state.calculadora.historial[-1]
-   
-   # Mostrar gráficos del día seleccionado
-   if paso_seleccionado and "trace" in paso_seleccionado:
-       # Crear gráfico de distribuciones posteriores
-       fig1, ax1 = plt.subplots(figsize=(10, 5))
-       tasa_a_samples = paso_seleccionado['trace'].posterior['tasa_clicks_a'].values.flatten()
-       tasa_b_samples = paso_seleccionado['trace'].posterior['tasa_clicks_b'].values.flatten()
-       
-       sns.kdeplot(tasa_a_samples, label="Grupo A", fill=True, ax=ax1)
-       sns.kdeplot(tasa_b_samples, label="Grupo B", fill=True, ax=ax1)
-       ax1.set_title(f"{paso_seleccionado['dia']} - Distribuciones posteriores")
-       ax1.set_xlabel("Tasa de clicks por visita")
-       ax1.legend()
-       
-       st.pyplot(fig1)
-       
-       # Crear gráfico de diferencia
-       fig2, ax2 = plt.subplots(figsize=(10, 4))
-       diff = paso_seleccionado['trace'].posterior['diferencia'].values.flatten()
-       
-       sns.kdeplot(diff, label="Diferencia (B - A)", color="purple", fill=True, ax=ax2)
-       ax2.axvline(0, color="black", linestyle="--")
-       ax2.set_title(f"{paso_seleccionado['dia']} - Diferencia de tasa de clicks")
-       ax2.set_xlabel("Diferencia en clicks por visita")
-       ax2.legend()
-       
-       st.pyplot(fig2)
-       
-       # Mostrar estadísticas del día seleccionado
-       col1, col2 = st.columns(2)
-       with col1:
-           st.subheader(f"Estadísticas del {paso_seleccionado['dia']}")
-           mean_a = paso_seleccionado['alpha_a'] / paso_seleccionado['beta_a']
-           mean_b = paso_seleccionado['alpha_b'] / paso_seleccionado['beta_b']
-           st.metric("Tasa de conversión A", f"{mean_a:.4f}")
-           st.metric("Tasa de conversión B", f"{mean_b:.4f}")
-       
-       with col2:
-           if "uplift" in paso_seleccionado:
-               uplift = paso_seleccionado["uplift"]
-               st.subheader("Uplift (B vs A)")
-               st.metric("Media", f"{uplift['media']:.2%}")
-               st.metric("IC 95%", f"[{uplift['ic_95'][0]:.2%}, {uplift['ic_95'][1]:.2%}]")
-           
-           prob_b_mejor = np.mean(diff > 0)
-           st.metric("Probabilidad de que B > A", f"{prob_b_mejor:.2%}")
-   
-   # Mostrar gráfico de evolución si hay más de un día de datos
-   if len(st.session_state.calculadora.historial) > 2:  # Más de 2 porque el primero es "A priori"
-       st.subheader("Evolución de tasas de conversión")
-       
-       # Preparar datos para el gráfico de evolución
-       dias = []
-       tasas_a = []
-       tasas_b = []
-       
-       for paso in st.session_state.calculadora.historial[1:]:  # Excluir "A priori"
-           if 'dia' in paso:
-               dias.append(paso['dia'])
-               if tipo_modelo == "Conversiones 0/1 (Beta–Binomial)":
-                   tasas_a.append(paso['alpha_a'] / (paso['alpha_a'] + paso['beta_a']))
-                   tasas_b.append(paso['alpha_b'] / (paso['alpha_b'] + paso['beta_b']))
-               else:
-                   tasas_a.append(paso['alpha_a'] / paso['beta_a'])
-                   tasas_b.append(paso['alpha_b'] / paso['beta_b'])
-       
-       # Crear gráfico de evolución
-       fig3, ax3 = plt.subplots(figsize=(10, 5))
-       ax3.plot(dias, tasas_a, 'o-', label="Grupo A", color="blue")
-       ax3.plot(dias, tasas_b, 'o-', label="Grupo B", color="orange")
-       ax3.set_title("Evolución de tasas de conversión")
-       ax3.set_xlabel("Día")
-       ax3.set_ylabel("Tasa de conversión")
-       ax3.legend()
-       ax3.grid(True)
-       plt.xticks(rotation=45)
-       plt.tight_layout
-       
-       st.pyplot(fig3)
+    with res_tab3:
+        if len(st.session_state.calculadora.historial) > 0:
+            st.subheader("Gráficos")
+
+            # Crear selector de día (excluimos "A priori")
+            dias_disponibles = [paso["dia"] for paso in st.session_state.calculadora.historial if "dia" in paso]
+            if len(dias_disponibles) > 1:
+                dia_seleccionado = st.selectbox(
+                    "Selecciona un día para ver sus gráficos:",
+                    dias_disponibles[1:],  # Excluir "A priori"
+                    index=len(dias_disponibles) - 2  # Último día por defecto
+                )
+
+                paso_seleccionado = None
+                for paso in st.session_state.calculadora.historial:
+                    if "dia" in paso and paso["dia"] == dia_seleccionado:
+                        paso_seleccionado = paso
+                        break
+            else:
+                paso_seleccionado = st.session_state.calculadora.historial[-1]
+
+            if paso_seleccionado is None:
+                st.info("No hay datos suficientes para mostrar gráficos.")
+            else:
+                # Detectar tipo de modelo
+                es_gamma = "trace" in paso_seleccionado           # CalculadoraClicksBayesiana
+                es_beta = "posterior" in paso_seleccionado and "comparacion" in paso_seleccionado  # Conversiones
+
+                # ---------------------------
+                # 1) Gráficos del día elegido
+                # ---------------------------
+                if es_gamma:
+                    # === Modelo Gamma–Poisson (Clicks/CTR) ===
+                    fig1, ax1 = plt.subplots(figsize=(10, 5))
+                    tasa_a_samples = paso_seleccionado["trace"].posterior["tasa_clicks_a"].values.flatten()
+                    tasa_b_samples = paso_seleccionado["trace"].posterior["tasa_clicks_b"].values.flatten()
+
+                    sns.kdeplot(tasa_a_samples, label="Grupo A", fill=True, ax=ax1)
+                    sns.kdeplot(tasa_b_samples, label="Grupo B", fill=True, ax=ax1)
+                    ax1.set_title(f"{paso_seleccionado['dia']} - Distribuciones posteriores (Gamma–Poisson)")
+                    ax1.set_xlabel("Tasa de clicks por visita")
+                    ax1.legend()
+                    st.pyplot(fig1)
+
+                    # Gráfico de diferencia
+                    fig2, ax2 = plt.subplots(figsize=(10, 4))
+                    diff = paso_seleccionado["trace"].posterior["diferencia"].values.flatten()
+
+                    sns.kdeplot(diff, label="Diferencia (B - A)", fill=True, ax=ax2)
+                    ax2.axvline(0, color="black", linestyle="--")
+                    ax2.set_title(f"{paso_seleccionado['dia']} - Diferencia de tasa de clicks")
+                    ax2.set_xlabel("Diferencia en clicks por visita")
+                    ax2.legend()
+                    st.pyplot(fig2)
+
+                    # Estadísticas del día
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        st.subheader(f"Estadísticas del {paso_seleccionado['dia']}")
+                        mean_a = paso_seleccionado["alpha_a"] / paso_seleccionado["beta_a"]
+                        mean_b = paso_seleccionado["alpha_b"] / paso_seleccionado["beta_b"]
+                        st.metric("Tasa esperada A", f"{mean_a:.4f}")
+                        st.metric("Tasa esperada B", f"{mean_b:.4f}")
+                    with col2:
+                        if "uplift" in paso_seleccionado:
+                            uplift = paso_seleccionado["uplift"]
+                            st.subheader("Uplift (B vs A)")
+                            st.metric("Media", f"{uplift['media']:.2%}")
+                            st.metric("IC 95%", f"[{uplift['ic_95'][0]:.2%}, {uplift['ic_95'][1]:.2%}]")
+
+                        prob_b_mejor = np.mean(diff > 0)
+                        st.metric("Probabilidad de que B > A", f"{prob_b_mejor:.2%}")
+
+                elif es_beta:
+                    # === Modelo Beta–Binomial (Conversiones 0/1) ===
+                    post_a = paso_seleccionado["posterior"]["A"]
+                    post_b = paso_seleccionado["posterior"]["B"]
+                    comp = paso_seleccionado["comparacion"]
+
+                    muestras_a = post_a["muestras"]
+                    muestras_b = post_b["muestras"]
+                    diff = comp["diff"]
+                    uplift = comp["uplift"]
+
+                    # Gráfico de distribuciones posteriores
+                    fig1, ax1 = plt.subplots(figsize=(10, 5))
+                    sns.kdeplot(muestras_a, label="Grupo A", fill=True, ax=ax1)
+                    sns.kdeplot(muestras_b, label="Grupo B", fill=True, ax=ax1)
+                    ax1.set_title(f"{paso_seleccionado['dia']} - Distribuciones posteriores (Beta–Binomial)")
+                    ax1.set_xlabel("Tasa de conversión")
+                    ax1.legend()
+                    st.pyplot(fig1)
+
+                    # Gráfico de diferencia B - A
+                    fig2, ax2 = plt.subplots(figsize=(10, 4))
+                    # Filtramos NaNs por si los hubiera en uplift/diff
+                    diff_clean = diff[~np.isnan(diff)]
+                    sns.kdeplot(diff_clean, label="Diferencia (B - A)", fill=True, ax=ax2)
+                    ax2.axvline(0, color="black", linestyle="--")
+                    ax2.set_title(f"{paso_seleccionado['dia']} - Diferencia de tasa de conversión")
+                    ax2.set_xlabel("Diferencia en tasa de conversión")
+                    ax2.legend()
+                    st.pyplot(fig2)
+
+                    # Estadísticas del día
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        st.subheader(f"Estadísticas del {paso_seleccionado['dia']}")
+                        st.metric("Tasa esperada A", f"{post_a['media']:.4f}")
+                        st.metric("Tasa esperada B", f"{post_b['media']:.4f}")
+                        st.write(f"IC95% A: [{post_a['ci'][0]:.4f}, {post_a['ci'][1]:.4f}]")
+                        st.write(f"IC95% B: [{post_b['ci'][0]:.4f}, {post_b['ci'][1]:.4f}]")
+                    with col2:
+                        st.subheader("Comparación B vs A")
+                        st.metric("Uplift medio", f"{comp['uplift_media']:.2%}")
+                        st.write(f"IC95% uplift: [{comp['uplift_ci'][0]:.2%}, {comp['uplift_ci'][1]:.2%}]")
+                        st.metric("Probabilidad de que B > A", f"{comp['prob_b_mejor']:.2%}")
+                else:
+                    st.info("No hay información suficiente para mostrar gráficos para este modelo.")
+
+            # ---------------------------
+            # 2) Gráfico de evolución
+            # ---------------------------
+            if len(st.session_state.calculadora.historial) > 2:  # Más de 2 porque el primero es "A priori"
+                st.subheader("Evolución de tasas")
+
+                dias = []
+                tasas_a = []
+                tasas_b = []
+
+                for paso in st.session_state.calculadora.historial[1:]:  # excluimos "A priori"
+                    if "dia" not in paso:
+                        continue
+                    dias.append(paso["dia"])
+
+                    if "trace" in paso:
+                        # Gamma–Poisson
+                        tasa_a = paso["alpha_a"] / paso["beta_a"]
+                        tasa_b = paso["alpha_b"] / paso["beta_b"]
+                    elif "posterior" in paso:
+                        # Beta–Binomial: usamos la media posterior
+                        tasa_a = paso["posterior"]["A"]["media"]
+                        tasa_b = paso["posterior"]["B"]["media"]
+                    else:
+                        dias.pop()  # no sabemos qué es, lo quitamos
+                        continue
+
+                    tasas_a.append(tasa_a)
+                    tasas_b.append(tasa_b)
+
+                if dias:
+                    fig3, ax3 = plt.subplots(figsize=(10, 5))
+                    ax3.plot(dias, tasas_a, 'o-', label="Grupo A")
+                    ax3.plot(dias, tasas_b, 'o-', label="Grupo B")
+                    ax3.set_title("Evolución de tasas")
+                    ax3.set_xlabel("Día")
+                    ax3.set_ylabel("Tasa")
+                    ax3.legend()
+                    ax3.grid(True)
+                    plt.xticks(rotation=45)
+                    plt.tight_layout()
+                    st.pyplot(fig3)
+        else:
+            st.info("Todavía no has añadido datos a la calculadora.")
+
 
 # Pie de página
 st.markdown('<div class="section-spacer"></div>', unsafe_allow_html=True)

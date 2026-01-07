@@ -322,7 +322,7 @@ with tab1:
                
                # Mostrar vista previa de los datos
                st.subheader("Vista previa de tus datos:")
-               st.dataframe(df, use_container_width=True)
+               st.dataframe(df, width="stretch")
                
                # Mostrar estadísticas rápidas
                col1, col2, col3 = st.columns(3)
@@ -427,7 +427,7 @@ with tab3:
        'Ejemplo': ['1, 2, 3... o "Lunes", "Martes"...', '13, 29, 28...', '188, 254, 207...', '21, 14, 22...', '181, 176, 173...']
    })
    
-   st.dataframe(requisitos_df, use_container_width=True, hide_index=True)
+   st.dataframe(requisitos_df, width="stretch", hide_index=True)
    
    # Ejemplo de archivo CSV
    st.markdown("""
